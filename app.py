@@ -4,7 +4,6 @@ import pandas as pd
 import joblib
 import string
 import os
-
 # --- 頁面設定 ---
 st.set_page_config(page_title="垃圾郵件預測系統", page_icon="📧")
 st.title("📧 垃圾郵件(Spam)預測系統")
@@ -75,18 +74,36 @@ if st.button("開始預測"):
 # --- 功能 3: 顯示訓練成果與內容 ---
 st.header("📊 訓練成果與資料集內容")
 
-with st.expander("點擊查看模型訓練成果"):
-    st.write("我們使用 `Naive Bayes` 模型進行訓練，以下是模型的表現：")
-    st.text("準確率 (Accuracy): 0.9856")
-    st.text("""
-                  precision    recall  f1-score   support
+st.subheader("模型訓練成果") # Changed from st.expander title
+st.write("我們使用 `Naive Bayes` 模型進行訓練，以下是模型的表現：")
+st.text("準確率 (Accuracy): 0.9856") # Keeping hardcoded accuracy for now
 
-         ham       0.98      1.00      0.99       966
-        spam       0.99      0.90      0.94       149
+report_plot_path = "plots/classification_report.png"
+if os.path.exists(report_plot_path):
+    st.image(report_plot_path, caption="分類報告 (Classification Report)")
+else:
+    st.warning(f"找不到分類報告圖表：{report_plot_path}。請先執行 `train_model.py`。")
 
-    avg / total       0.99      0.99      0.98      1115
-    """)
-    st.info("**名詞解釋：**\n- **Precision (精確率):** 在所有被預測為垃圾郵件的郵件中，有多少是真的垃圾郵件。\n- **Recall (召回率):** 在所有真的垃圾郵件中，有多少被成功預測出來。\n- **F1-score:** Precision 和 Recall 的調和平均數，是個綜合指標。")
+st.info("**名詞解釋：**\n- **Precision (精確率):** 在所有被預測為垃圾郵件的郵件中，有多少是真的垃圾郵件。\n- **Recall (召回率):** 在所有真的垃圾郵件中，有多少被成功預測出來。\n- **F1-score:** Precision 和 Recall 的調和平均數，是個綜合指標。")
 
-with st.expander("點擊查看原始資料集"):
-    st.dataframe(df)
+st.subheader("原始資料集") # Changed from st.expander title
+st.dataframe(df)
+
+# --- 功能 4: 詞彙頻率分析 ---
+st.header("🔍 詞彙頻率分析")
+st.write("請先執行 `token_list.py` 以生成詞彙頻率圖表。")
+ham_plot_path = "plots/top_ham_tokens.png"
+spam_plot_path = "plots/top_spam_tokens.png"
+
+if os.path.exists(ham_plot_path):
+    st.subheader("最常出現的 Ham 詞彙")
+    st.image(ham_plot_path, caption="Top Ham Tokens")
+else:
+    st.warning(f"找不到 Ham 詞彙圖表：{ham_plot_path}")
+
+if os.path.exists(spam_plot_path):
+    st.subheader("最常出現的 Spam 詞彙")
+    st.image(spam_plot_path, caption="Top Spam Tokens")
+else:
+    st.warning(f"找不到 Spam 詞彙圖表：{spam_plot_path}")
+

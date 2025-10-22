@@ -4,6 +4,8 @@ import pandas as pd
 import string
 import joblib
 import requests
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -65,8 +67,20 @@ report = classification_report(y_test, y_pred)
 
 print("\n--- 模型評估結果 ---")
 print(f"準確率 (Accuracy): {accuracy:.4f}")
-print("分類報告 (Classification Report):")
-print(report)
+
+# Generate and save classification report plot
+report_dict = classification_report(y_test, y_pred, output_dict=True)
+df_report = pd.DataFrame(report_dict).transpose()
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(df_report.iloc[:-1, :-1], annot=True, cmap="Blues", fmt=".2f") # Exclude 'accuracy' and 'support' rows/cols for heatmap
+plt.title("Classification Report")
+plt.tight_layout()
+os.makedirs("plots", exist_ok=True)
+plt.savefig("plots/classification_report.png")
+plt.close()
+
+print("分類報告圖表已儲存至 'plots/classification_report.png'")
 print("---------------------\n")
 
 # --- 6. 儲存模型與向量器 ---
