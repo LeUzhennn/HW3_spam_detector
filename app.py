@@ -30,46 +30,63 @@ def load_model_and_data():
 
 model, vectorizer, df = load_model_and_data()
 
-# --- 功能 1: 隨機抽樣與預測 ---
-st.header("✉️ 隨機抽樣測試")
+# --- 互動測試區 ---
+st.header("📨 互動測試區")
 
 if 'random_message' not in st.session_state:
     st.session_state.random_message = ""
 
-if st.button("從資料集中隨機選擇一筆"):
-    random_sample = df.sample(n=1).iloc[0]
-    st.session_state.random_message = random_sample["message"]
-    st.info(f"**抽樣內容：** {st.session_state.random_message}")
-    st.info(f"**真實標籤：** {'垃圾郵件 (Spam)' if random_sample['label'] == 'spam' else '正常郵件 (Ham)'}")
+col1, col2 = st.columns(2)
 
-# --- 功能 2: 手動輸入預測 ---
-st.header("✍️ 自行輸入文字預測")
+with col1:
+    st.subheader("選項 1: 隨機抽樣")
+    if st.button("從資料集中隨機選擇一筆"):
+        random_sample = df.sample(n=1).iloc[0]
+        st.session_state.random_message = random_sample["message"]
+        st.info(f"**真實標籤：** {'垃圾郵件 (Spam)' if random_sample['label'] == 'spam' else '正常郵件 (Ham)'}")
 
-# 使用 session_state 中的值來設定 text_area
-user_input = st.text_area("請在下方貼上或輸入您想預測的郵件內容：", st.session_state.random_message, height=150)
+with col2:
+    st.subheader("選項 2: 從範例選擇")
+    example_messages = {
+        "選擇一個範例...": "",
+        "正常郵件 (Ham) 範例 1": "I'm going to try for 2 months ha ha only joking",
+        "正常郵件 (Ham) 範例 2": "Sorry, I'll call later",
+        "垃圾郵件 (Spam) 範例 1": "WINNER!! As a valued network customer you have been selected to receivea £900 prize reward! To claim call 09061701461.",
+        "垃圾郵件 (Spam) 範例 2": "Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA to 87121 to receive entry question(std txt rate)T&C's apply 08452810075over18's",
+    }
+    selected_example_key = st.selectbox("選擇範例", options=list(example_messages.keys()))
+    if selected_example_key != "選擇一個範例...":
+        st.session_state.random_message = example_messages[selected_example_key]
+
+# --- 手動輸入預測 ---
+st.subheader("✍️ 自行輸入或貼上文字")
+user_input = st.text_area("郵件內容：", st.session_state.random_message, height=150)
 
 if st.button("開始預測"):
     if user_input.strip() == "":
         st.warning("請輸入有效的文字內容！")
     else:
-        # 1. 前處理
-        processed_input = user_input.lower().translate(str.maketrans('', '', string.punctuation))
-        
-        # 2. 向量化
-        vectorized_input = vectorizer.transform([processed_input])
-        
-        # 3. 預測
-        prediction = model.predict(vectorized_input)[0]
-        prediction_proba = model.predict_proba(vectorized_input)[0]
+        with st.spinner("模型預測中..."):
+            # 1. 前處理
+            processed_input = user_input.lower().translate(str.maketrans(' ', ' ', string.punctuation))
+            
+            # 2. 向量化
+            vectorized_input = vectorizer.transform([processed_input])
+            
+            # 3. 預測
+            prediction = model.predict(vectorized_input)[0]
+            prediction_proba = model.predict_proba(vectorized_input)[0]
 
-        # 4. 顯示結果
-        st.subheader("預測結果")
-        if prediction == "spam":
-            spam_probability = prediction_proba[1] * 100
-            st.error(f"這封郵件有 **{spam_probability:.2f}%** 的可能性是【垃圾郵件】！")
-        else:
-            ham_probability = prediction_proba[0] * 100
-            st.success(f"這封郵件有 **{ham_probability:.2f}%** 的可能性是【正常郵件】。")
+            # 4. 顯示結果
+            st.subheader("預測結果")
+            if prediction == "spam":
+                spam_probability = prediction_proba[1]
+                st.error(f"這封郵件有 **{spam_probability*100:.2f}%** 的可能性是【垃圾郵件】！")
+                st.progress(spam_probability)
+            else:
+                ham_probability = prediction_proba[0]
+                st.success(f"這封郵件有 **{ham_probability*100:.2f}%** 的可能性是【正常郵件】。")
+                st.progress(ham_probability)
 
 # --- 功能 3: 顯示訓練成果與內容 ---
 st.header("📊 訓練成果與資料集內容")
